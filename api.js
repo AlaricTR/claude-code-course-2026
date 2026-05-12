@@ -1,13 +1,13 @@
-const fs = require("node:fs");
+const fs = require("node:fs"); //import needed dependencies equivalent to #include
 const path = require("node:path");
 const Anthropic = require("@anthropic-ai/sdk");
-const { toolDefinitions, handleToolCall } = require("./tools");
+const { toolDefinitions, handleToolCall } = require("./tools"); //destructuring ./tools module into submodules
 
 const MODEL = "claude-sonnet-4-6";
 
 const MAX_ITERATIONS = 10;
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); //this sets up the client using th API key
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); //this sets up the client using th API key same as "import x as y"
 
 function loadSystemPrompt() { //this gives basic context to claude, and which tools it can use
   const base =
@@ -20,14 +20,14 @@ function loadSystemPrompt() { //this gives basic context to claude, and which to
   if (!fs.existsSync(claudeMdPath)) return base;
 
   const claudeMd = fs.readFileSync(claudeMdPath, "utf-8");
-  return `${base}\n\n--- Project context (from CLAUDE.md) ---\n${claudeMd}`;
+  return `${base}\n\n--- Project context (from CLAUDE.md) ---\n${claudeMd}`; //backticks make this the functional equivalent of an f-string
 }
 async function chat(userMessage, history) { //this is the loop that the user uses to chat wit claude
 
-  const messages = [...history, { role: "user", content: userMessage }]; //appends new message to history and sends it all
+  const messages = [...history, { role: "user", content: userMessage }]; //appends new message to history and sends it all, does this by copying the existing history into a new array and appending the new message
   const trace = [];
-  for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await client.messages.create({
+  for (let i = 0; i < MAX_ITERATIONS; i++) { //iterates throughm potentially with more tools
+    const response = await client.messages.create({ //this is a "Promise"
       model: MODEL,
       max_tokens: 4096,
       system: loadSystemPrompt(),
@@ -46,7 +46,7 @@ async function chat(userMessage, history) { //this is the loop that the user use
     }
 
     const toolUses = response.content.filter((b) => b.type === "tool_use"); //this shows the user what tools claude used, if any. If none are used, just return the text block answer
-    if (toolUses.length === 0) {
+    if (toolUses.length === 0) { //only if no tools are used.
       const reply = response.content
         .filter((b) => b.type === "text")
         .map((b) => b.text)
