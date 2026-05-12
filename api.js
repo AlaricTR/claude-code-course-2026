@@ -7,9 +7,9 @@ const MODEL = "claude-sonnet-4-6";
 
 const MAX_ITERATIONS = 10;
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }); //this sets up the client using th API key
 
-function loadSystemPrompt() {
+function loadSystemPrompt() { //this gives basic context to claude, and which tools it can use
   const base =
     "You are devlens, an AI assistant embedded in the user's project directory. " +
     "You have tools for reading files, writing files, running shell commands, " +
@@ -22,20 +22,20 @@ function loadSystemPrompt() {
   const claudeMd = fs.readFileSync(claudeMdPath, "utf-8");
   return `${base}\n\n--- Project context (from CLAUDE.md) ---\n${claudeMd}`;
 }
-async function chat(userMessage, history) {
+async function chat(userMessage, history) { //this is the loop that the user uses to chat wit claude
 
-  const messages = [...history, { role: "user", content: userMessage }];
+  const messages = [...history, { role: "user", content: userMessage }]; //appends new message to history and sends it all
   const trace = [];
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 4096,
       system: loadSystemPrompt(),
-      tools: toolDefinitions,
-      messages,
+      tools: toolDefinitions, //what the agent is allowed to use
+      messages, //this is the full conversation with most recent user input added
     });
 
-    messages.push({ role: "assistant", content: response.content });
+    messages.push({ role: "assistant", content: response.content }); //this adds the model's response to the conversation
 
     for (const block of response.content) {
       if (block.type === "text") {
@@ -45,7 +45,7 @@ async function chat(userMessage, history) {
       }
     }
 
-    const toolUses = response.content.filter((b) => b.type === "tool_use");
+    const toolUses = response.content.filter((b) => b.type === "tool_use"); //this shows the user what tools claude used, if any. If none are used, just return the text block answer
     if (toolUses.length === 0) {
       const reply = response.content
         .filter((b) => b.type === "text")
@@ -54,7 +54,7 @@ async function chat(userMessage, history) {
       return { reply, history: messages, trace, iterations: i + 1 };
     }
 
-    const toolResults = [];
+    const toolResults = []; //collects the results of tool usage
     for (const block of toolUses) {
       const result = await handleToolCall(block.name, block.input);
       toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
@@ -63,7 +63,7 @@ async function chat(userMessage, history) {
     messages.push({ role: "user", content: toolResults });
   }
 
-  return {
+  return { //thus returns if the model tries to loop back more than 10 times without answering in plain text
     reply: `(Stopped after ${MAX_ITERATIONS} iterations — Claude kept asking for tools. Task may be incomplete. Raise MAX_ITERATIONS in api.js if this is expected.)`,
     history: messages,
     trace,
@@ -71,4 +71,4 @@ async function chat(userMessage, history) {
   };
 }
 
-module.exports = { chat };
+module.exports = { chat }; //this exports the entire chat 
