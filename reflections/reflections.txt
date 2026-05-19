@@ -1,0 +1,9 @@
+The /loop skill is a skill I could see being very useful when working in a team.
+It works by repeatedly running a command or prompt at regular intervals. This could
+prove very useful when working in a team, since you could set up Claude using this skill
+to try and fetch the latest branch of a project you are working on.
+The /loop does not actually function like a true loop (surprisingly). Instead, it 
+schedules an "alarm" that triggers after the predetermined delay, and then that alarm 
+schedules another alarm, etc... until the current Claude session runs out or after 3 days (whichever comes first).
+This implementation is much better than a simple loop for token usage and for user
+availability.
